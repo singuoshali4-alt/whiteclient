@@ -1,0 +1,29 @@
+name: Build WhiteClient
+on:
+  push:
+    branches: [ main, master ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+      - name: Extract ZIP
+        run: unzip "whitemod (4).zip" || unzip whitemod*.zip
+      - name: Build
+        run: |
+          cd minecraft-mod
+          chmod +x gradlew 2>/dev/null || true
+          wget -q https://services.gradle.org/distributions/gradle-4.10.3-bin.zip -O gradle.zip
+          unzip -q gradle.zip
+          export PATH=$PWD/gradle-4.10.3/bin:$PATH
+          gradle setupDecompWorkspace --no-daemon
+          gradle build --no-daemon
+      - name: Upload JAR
+        uses: actions/upload-artifact@v3
+        with:
+          name: WhiteClient
+          path: minecraft-mod/build/libs/*.jar
