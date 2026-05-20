@@ -7,22 +7,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           java-version: '8'
           distribution: 'temurin'
-      - name: Extract ZIP
-        run: unzip "whitemod (4).zip" || unzip whitemod*.zip
-      - name: Build
+
+      - name: Download Forge MDK
         run: |
-          cd minecraft-mod
-          wget -q https://services.gradle.org/distributions/gradle-4.10.3-bin.zip -O gradle.zip
-          unzip -q gradle.zip
-          export PATH=$PWD/gradle-4.10.3/bin:$PATH
-          gradle setupDecompWorkspace --no-daemon
-          gradle build --no-daemon
+          wget -q "https://maven.minecraftforge.net/net/minecraftforge/forge/1.12.2-14.23.5.2860/forge-1.12.2-14.23.5.2860-mdk.zip" -O forge-mdk.zip
+          unzip -q forge-mdk.zip -d forge-mdk
+
+      - name: Extract our mod files
+        run: unzip "whitemod (4).zip" || unzip whitemod*.zip
+
+      - name: Copy mod sources into MDK
+        run: |
+          rm -rf forge-mdk/src
+          cp -r minecraft-mod/src forge-mdk/
+          cp minecraft-mod/build.gradle forge-mdk/build.gradle
+          cp minecraft-mod/gradle.properties forge-mdk/gradle.properties
+
+      - name: Build mod
+        working-directory: forge-mdk
+        run: |
+          chmod +x gradlew
+          ./gradlew setupDecompWorkspace --no-daemon
+          ./gradlew build --no-daemon
+
       - name: Upload JAR
         uses: actions/upload-artifact@v4
         with:
-          name: WhiteClient
-          path: minecraft-mod/build/libs/*.jar
+          name: WhiteClient-1.0.0
+          path: forge-mdk/build/libs/*.jar
